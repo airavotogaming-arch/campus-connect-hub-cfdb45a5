@@ -39,6 +39,7 @@ import {
 import { useComplaints } from "@/components/portal/complaintsStore";
 import { useAnnouncements } from "@/components/portal/announcements";
 import { useT } from "@/components/portal/i18n";
+import { useProfile } from "@/components/portal/profile";
 import campusImage from "@/assets/campus.jpg";
 
 export const Route = createFileRoute("/student")({
@@ -72,6 +73,7 @@ function StudentPortal() {
   const { announcements } = useAnnouncements();
   const navigate = useNavigate();
   const { t } = useT();
+  const { profile } = useProfile();
 
   const stats = useMemo(
     () => [
@@ -127,7 +129,7 @@ function StudentPortal() {
       urgency: data.urgency,
       description: data.description,
       attachments: data.attachments,
-      student: data.anonymous ? "Anonymous" : "Rahul Sharma",
+      student: data.anonymous ? "Anonymous" : profile.name,
       anonymous: data.anonymous,
     });
     toast.success(`Complaint ${next.id} submitted`, {
@@ -152,7 +154,7 @@ function StudentPortal() {
                 <div className="p-7 md:p-9">
                   <p className="text-sm font-semibold text-muted-foreground">{t("Welcome back,")}</p>
                   <h1 className="font-display text-4xl font-extrabold tracking-tight md:text-5xl">
-                    Rahul <span className="align-middle">👋</span>
+                    {profile.name.split(" ")[0] || "Student"} <span className="align-middle">👋</span>
                   </h1>
                   <p className="mt-3 max-w-sm text-sm leading-relaxed text-muted-foreground">
                     Your voice matters. Submit your complaint and help us make the campus better.
