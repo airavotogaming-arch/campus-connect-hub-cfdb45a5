@@ -6,8 +6,10 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { Paperclip } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { statusStyles, stepIndexFor, timelineSteps, type Complaint } from "./data";
+import { AttachmentGrid } from "./AttachmentPreview";
 import { useT } from "./i18n";
 
 export function TrackDialog({
@@ -50,6 +52,16 @@ export function TrackDialog({
               <p className="text-sm leading-relaxed text-muted-foreground">
                 {complaint.description}
               </p>
+
+              {(complaint.attachments?.length ?? 0) > 0 && (
+                <div>
+                  <p className="mb-3 flex items-center gap-2 text-sm font-bold text-foreground">
+                    <Paperclip className="size-4 text-primary" />
+                    {t("Attachments")} ({complaint.attachments!.length})
+                  </p>
+                  <AttachmentGrid attachments={complaint.attachments!} downloadable />
+                </div>
+              )}
 
               <div>
                 <p className="mb-4 text-sm font-bold text-foreground">{t("Status timeline")}</p>
