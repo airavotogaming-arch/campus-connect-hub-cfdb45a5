@@ -12,8 +12,12 @@ import {
   Hourglass,
   LayoutDashboard,
   Megaphone,
+  Moon,
   Search,
   ShieldCheck,
+  Sun,
+  Globe,
+  Check,
   Paperclip,
   Trash2,
   TrendingUp,
@@ -39,6 +43,16 @@ import { useAnnouncements } from "@/components/portal/announcements";
 import { useComplaints } from "@/components/portal/complaintsStore";
 import { AttachmentGrid } from "@/components/portal/AttachmentPreview";
 import { useT } from "@/components/portal/i18n";
+import { languages, useLanguage, useTheme } from "@/components/portal/prefs";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -91,6 +105,8 @@ function AdminDashboard() {
   const [annTitle, setAnnTitle] = useState("");
   const [annBody, setAnnBody] = useState("");
   const { t: tr } = useT();
+  const { theme, toggle: toggleTheme } = useTheme();
+  const { lang, current, change: changeLanguage } = useLanguage();
 
   const urgencyRank: Record<string, number> = { Critical: 0, High: 1, Medium: 2, Low: 3 };
 
@@ -255,6 +271,43 @@ function AdminDashboard() {
                   className="w-full rounded-full border border-border bg-muted/40 py-2.5 pl-9 pr-4 text-sm outline-none focus:border-primary/50"
                 />
               </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={toggleTheme}
+                aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+                title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+                className="size-10 rounded-xl bg-card"
+              >
+                {theme === "dark" ? <Sun className="size-[18px]" /> : <Moon className="size-[18px]" />}
+              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    aria-label="Change language"
+                    className="h-10 gap-2 rounded-xl bg-card px-3"
+                  >
+                    <Globe className="size-[18px]" />
+                    <span className="text-sm font-semibold uppercase">{current.code}</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuLabel>{tr("Language")}</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {languages.map((language) => (
+                    <DropdownMenuItem key={language.code} onClick={() => changeLanguage(language.code)}>
+                      <span className="flex-1">
+                        {language.native}
+                        <span className="ml-2 text-xs text-muted-foreground">{language.label}</span>
+                      </span>
+                      {lang === language.code ? <Check className="size-4 text-primary" /> : null}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
               <span className="relative flex size-10 items-center justify-center rounded-2xl border border-border bg-muted/40">
                 <Bell className="size-[18px]" />
                 <span className="absolute right-2.5 top-2.5 size-2 rounded-full bg-destructive" />
