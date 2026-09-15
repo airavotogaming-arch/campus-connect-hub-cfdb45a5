@@ -28,6 +28,91 @@ export type Complaint = {
   urgency: string;
   description: string;
   attachments?: Attachment[];
+  /** Promised resolution date set by admin, as yyyy-mm-dd. */
+  dueDate?: string;
+  /** Date (yyyy-mm-dd) the complaint was actually marked Resolved. */
+  resolvedOn?: string;
+};
+
+export type DeadlineInfo = {
+  /** Promised date, formatted for display. */
+  label: string;
+  days: number;
+  state: "none" | "upcoming" | "today" | "overdue" | "met" | "late";
+  text: string;
+};
+
+const DAY = 86_400_000;
+
+function startOfToday() {
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+}
+
+function parseDay(value: string) {
+  const [y, m, d] = value.split("-").map(Number);
+  if (!y || !m || !d) return NaN;
+  return new Date(y, m - 1, d).getTime();
+}
+
+export function formatDueDate(value: string) {
+  const time = parseDay(value);
+  if (Number.isNaN(time)) return value;
+  return new Date(time).toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+/** Countdown / overdue information for a complaint's promised resolution date. */
+export function deadlineInfo(complaint: Complaint): DeadlineInfo {
+  const due = complaint.dueDate;
+  if (!due) return { label: "", days: 0, state: "none", text: "" };
+  const dueTime = parseDay(due);
+  if (Number.isNaN(dueTime)) return { label: "", days: 0, state: "none", text: "" };
+  const label = formatDueDate(due);
+
+  if (complaint.status === "Resolved") {
+    const closed = complaint.resolvedOn ? parseDay(complaint.resolvedOn) : NaN;
+    if (!Number.isNaN(closed) && closed > dueTime) {
+      const late = Math.round((closed - dueTime) / DAY);
+      return {
+        label,
+        days: late,
+        state: "late",
+        text: `Resolved ${late} day${late === 1 ? "" : "s"} after the promised date`,
+      };
+    }
+    return { label, days: 0, state: "met", text: "Resolved on time" };
+  }
+
+  const days = Math.round((dueTime - startOfToday()) / DAY);
+  if (days < 0) {
+    const over = Math.abs(days);
+    return {
+      label,
+      days: over,
+      state: "overdue",
+      text: `Overdue by ${over} day${over === 1 ? "" : "s"}`,
+    };
+  }
+  if (days === 0) return { label, days: 0, state: "today", text: "Due today" };
+  return {
+    label,
+    days,
+    state: "upcoming",
+    text: `${days} day${days === 1 ? "" : "s"} left`,
+  };
+}
+
+export const deadlineStyles: Record<DeadlineInfo["state"], string> = {
+  none: "",
+  upcoming: "bg-info/12 text-info border-info/25",
+  today: "bg-warning/18 text-warning-foreground border-warning/35",
+  overdue: "bg-destructive/12 text-destructive border-destructive/30",
+  met: "bg-success/12 text-success border-success/25",
+  late: "bg-warning/18 text-warning-foreground border-warning/35",
 };
 
 export const categories: {
