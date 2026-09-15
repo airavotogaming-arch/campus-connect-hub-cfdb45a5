@@ -24,9 +24,13 @@ const KEY = "campus-profile";
 const EVENT = "campus-profile-change";
 
 function read(): StudentProfile {
+  if (typeof window === "undefined") return defaultProfile;
   try {
     const raw = localStorage.getItem(KEY);
-    if (raw) return { ...defaultProfile, ...JSON.parse(raw) };
+    if (raw) {
+      const stored = JSON.parse(raw);
+      if (stored && typeof stored === "object") return { ...defaultProfile, ...stored };
+    }
   } catch {
     /* ignore */
   }
@@ -38,6 +42,7 @@ export function useProfile() {
 
   useEffect(() => {
     const sync = () => setProfile(read());
+    sync();
     window.addEventListener(EVENT, sync);
     window.addEventListener("storage", sync);
     return () => {

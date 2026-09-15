@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { User, Mail, Phone, IdCard, GraduationCap, CalendarDays, Save } from "lucide-react";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
 import { PortalSidebar } from "@/components/portal/Sidebar";
 import { useProfile } from "@/components/portal/profile";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 export const Route = createFileRoute("/profile")({
   head: () => ({
@@ -22,20 +24,44 @@ function ProfilePage() {
   const navigate = useNavigate();
   const { profile, save } = useProfile();
   const [form, setForm] = useState(profile);
+  const [errors, setErrors] = useState<Partial<Record<keyof typeof form, string>>>({});
+
+  useEffect(() => setForm(profile), [profile]);
 
   function set(key: keyof typeof form, value: string) {
     setForm((f) => ({ ...f, [key]: value }));
   }
 
   function handleSave() {
-    const initials = form.name
+    const next = {
+      ...form,
+      name: form.name.trim(),
+      rollNo: form.rollNo.trim(),
+      course: form.course.trim(),
+      year: form.year.trim(),
+      email: form.email.trim(),
+      phone: form.phone.trim(),
+    };
+    const nextErrors: Partial<Record<keyof typeof form, string>> = {};
+    if (next.name.length < 2 || next.name.length > 80) nextErrors.name = "Enter a valid name (2–80 characters).";
+    if (next.rollNo.length < 2 || next.rollNo.length > 30) nextErrors.rollNo = "Enter a valid roll number.";
+    if (next.course.length < 2 || next.course.length > 100) nextErrors.course = "Enter a valid course.";
+    if (next.year.length < 1 || next.year.length > 30) nextErrors.year = "Enter a valid year.";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(next.email) || next.email.length > 255) nextErrors.email = "Enter a valid email address.";
+    if (!/^\+?[0-9 ()-]{7,20}$/.test(next.phone)) nextErrors.phone = "Enter a valid phone number.";
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) {
+      toast.error("Please check the highlighted details.");
+      return;
+    }
+    const initials = next.name
       .split(" ")
       .filter(Boolean)
       .map((w) => w[0])
       .slice(0, 2)
       .join("")
       .toUpperCase();
-    save({ ...form, initials: initials || "ST" });
+    save({ ...next, initials: initials || "ST" });
     toast.success("Profile updated");
   }
 
@@ -91,23 +117,37 @@ function ProfilePage() {
                     <f.icon className="size-3.5" />
                     {f.label}
                   </span>
-                  <input
+                  <Input
+                    id={`profile-${f.key}`}
+                    type={f.key === "email" ? "email" : f.key === "phone" ? "tel" : "text"}
+                    autoComplete={f.key === "name" ? "name" : f.key === "email" ? "email" : f.key === "phone" ? "tel" : "off"}
+                    maxLength={f.key === "email" ? 255 : f.key === "course" ? 100 : 80}
                     value={form[f.key]}
-                    onChange={(e) => set(f.key, e.target.value)}
+                    onChange={(e) => {
+                      set(f.key, e.target.value);
+                      setErrors((current) => ({ ...current, [f.key]: undefined }));
+                    }}
                     placeholder={f.placeholder}
-                    className="h-11 w-full rounded-xl border border-border bg-muted/40 px-4 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-primary/50"
+                    aria-invalid={Boolean(errors[f.key])}
+                    aria-describedby={errors[f.key] ? `profile-${f.key}-error` : undefined}
+                    className="h-11 rounded-xl bg-muted/40"
                   />
+                  {errors[f.key] ? (
+                    <span id={`profile-${f.key}-error`} className="mt-1 block text-xs font-medium text-destructive">
+                      {errors[f.key]}
+                    </span>
+                  ) : null}
                 </label>
               ))}
             </div>
 
-            <button
+            <Button
               onClick={handleSave}
-              className="mt-6 inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-bold text-primary-foreground shadow-[var(--shadow-warm)] transition-transform hover:-translate-y-0.5"
+              className="mt-6 h-11 rounded-full px-6 font-bold shadow-[var(--shadow-warm)]"
             >
               <Save className="size-4" />
               Save Changes
-            </button>
+            </Button>
           </section>
         </main>
       </div>
