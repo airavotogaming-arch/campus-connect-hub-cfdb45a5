@@ -53,6 +53,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { notifications } from "@/components/portal/data";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -308,10 +310,28 @@ function AdminDashboard() {
                   ))}
                 </DropdownMenuContent>
               </DropdownMenu>
-              <span className="relative flex size-10 items-center justify-center rounded-2xl border border-border bg-muted/40">
-                <Bell className="size-[18px]" />
-                <span className="absolute right-2.5 top-2.5 size-2 rounded-full bg-destructive" />
-              </span>
+              <Popover>
+                <PopoverTrigger
+                  aria-label="Notifications"
+                  className="relative flex size-10 items-center justify-center rounded-2xl border border-border bg-muted/40 transition-colors hover:bg-accent"
+                >
+                  <Bell className="size-[18px]" />
+                  <span className="absolute right-2.5 top-2.5 size-2 rounded-full bg-destructive" />
+                </PopoverTrigger>
+                <PopoverContent align="end" className="w-80 p-0">
+                  <p className="border-b border-border px-4 py-3 text-sm font-bold">
+                    {tr("Notifications")}
+                  </p>
+                  <ul className="divide-y divide-border">
+                    {notifications.map((n) => (
+                      <li key={n.title} className="px-4 py-3">
+                        <p className="text-sm font-medium leading-snug text-foreground">{tr(n.title)}</p>
+                        <p className="mt-1 text-xs text-muted-foreground">{n.time}</p>
+                      </li>
+                    ))}
+                  </ul>
+                </PopoverContent>
+              </Popover>
               <div className="flex lg:hidden">
                 <select
                   value={tab}
